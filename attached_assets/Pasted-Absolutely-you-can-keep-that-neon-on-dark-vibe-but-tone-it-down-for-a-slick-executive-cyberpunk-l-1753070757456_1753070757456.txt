@@ -1,0 +1,68 @@
+Absolutely—you can keep that neon‑on‑dark vibe but tone it down for a slick, “executive cyberpunk” look. Here’s how:
+
+---
+
+## Professional Cyberpunk Palette
+
+```css
+:root {
+  /* Base surfaces */
+  --bg:     #1F1F2E;  /* very dark slate */
+  --surface:#2B2B3A;  /* muted charcoal */
+
+  /* Text colors */
+  --text:   #E0E0E0;  /* off‑white for body */
+  --heading:#FFFFFF;  /* pure white for headlines */
+  --subtext:#B3B3B3;  /* soft gray for captions */
+
+  /* Neon accents (use sparingly!) */
+  --primary:#00D9C0;  /* neon turquoise */
+  --secondary:#9C27B0;/* neon magenta */
+  --cta:    #FF5E5B;  /* neon coral for CTAs */
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+.card, .panel {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+a, .btn {
+  color: var(--primary);
+  transition: color .2s, text-shadow .2s;
+}
+a:hover, .btn:hover {
+  color: var(--secondary);
+  text-shadow: 0 0 8px var(--secondary);
+}
+.btn--cta {
+  background: var(--cta);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255,94,91,0.6);
+}
+h1, h2, h3 {
+  color: var(--heading);
+}
+small, .caption {
+  color: var(--subtext);
+}
+```
+
+### Styling & UX Tips
+
+1. **Neon as punctuation**
+   – Use your neon accents only for key interactive elements (links, primary buttons, notifications).
+2. **Subtle glows**
+   – Add very soft `text-shadow` or `box-shadow` to accent items—avoid full‑page glow.
+3. **Muted surfaces**
+   – Keep cards, headers, footers in charcoal tones (#2B2B3A – #373747) so neon truly pops.
+4. **Clean typography**
+   – Pair a geometric sans‑serif (e.g. Montserrat, Poppins) with straightforward weights—no over‑the‑top sci‑fi fonts.
+5. **Consistent spacing & radii**
+   – Use uniform `8px` or `12px` border‑radii, and a 4–8–16 spacing scale to anchor the layout.
+
+---
+
+This approach gives you the drama of cyberpunk—neon accent, dark mode, glowing edges—but keeps it legible, accessible, and professionally polished. Let me know if you want any tweaks (e.g. different accent tones or typography choices).

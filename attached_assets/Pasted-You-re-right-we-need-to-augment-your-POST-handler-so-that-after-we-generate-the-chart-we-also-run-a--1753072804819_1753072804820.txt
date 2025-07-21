@@ -1,0 +1,127 @@
+You’re right—we need to augment your POST handler so that after we generate the chart we also run a quick analysis pass over the steps and surface “improvement hints” alongside the SVG. Below is a drop‑in update for your `flowmatic.py` and `flowmatic.html` to make that happen.
+
+---
+
+## 1) `flowmatic.py`
+
+```python
+from flask import Blueprint, render_template, request
+import your_diagram_lib    # whatever you use to create the SVG
+# (you could also call an LLM here to get improvement suggestions)
+
+flowmatic_bp = Blueprint("flowmatic", __name__, template_folder="templates")
+
+def generate_flowchart(process_text):
+    # return SVG string or path
+    return your_diagram_lib.create_flowchart_svg(process_text)
+
+def analyze_process(process_text):
+    """
+    Very simple example heuristics.
+    Replace this with an LLM call or deeper logic as needed.
+    """
+    hints = []
+    steps = [s.strip() for s in process_text.split("→")]
+    if len(steps) > 5:
+        hints.append("Your process has >5 steps—consider breaking it into sub‑processes.")
+    if any("manual" in s.lower() for s in steps):
+        hints.append("I see a manual step; could you automate it?")    
+    # add more rules...
+    return hints
+
+@flowmatic_bp.route("/", methods=["GET","POST"])
+def index():
+    chart_svg = None
+    hints = []
+    if request.method == "POST":
+        proc = request.form.get("process", "").strip()
+        if proc:
+            chart_svg = generate_flowchart(proc)
+            hints     = analyze_process(proc)
+    return render_template("flowmatic.html",
+                           chart_svg=chart_svg,
+                           hints=hints)
+```
+
+---
+
+## 2) `templates/flowmatic.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>⚡ FlowMatic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main class="tool-content">
+    <h1>⚡ FlowMatic</h1>
+    <p class="tagline">
+      Turn text‑based process steps into interactive flowcharts—and get instant improvement hints.
+    </p>
+
+    <label for="preset-select"><strong>Common Processes:</strong></label>
+    <select id="preset-select">
+      <option value="">— choose a preset —</option>
+      <option value="Customer places order → Payment processed → Inventory checked → Shipping label created → Confirmation email sent">
+        Order Fulfillment
+      </option>
+      <!-- …other presets… -->
+    </select>
+
+    <form method="POST">
+      <label for="process-input"><strong>Or enter your own steps:</strong></label>
+      <textarea id="process-input" name="process" rows="5"
+        placeholder="e.g. Customer places order → Payment processed → Inventory checked → Shipping label created → Confirmation email sent"></textarea>
+      <button class="btn-highlight" type="submit">Generate FlowMatic</button>
+    </form>
+
+    {% if chart_svg %}
+      <section class="flow-chart">
+        <h2>Your FlowMatic Visualization</h2>
+        <div class="chart-container">
+          {{ chart_svg|safe }}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if hints %}
+      <section class="improvement-hints">
+        <h2>💡 Improvement Hints</h2>
+        <ul>
+          {% for hint in hints %}
+            <li>{{ hint }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  </main>
+
+  <script>
+    // auto‑populate textarea when preset is chosen
+    document.getElementById('preset-select')
+      .addEventListener('change', function() {
+        document.getElementById('process-input').value = this.value || "";
+      });
+  </script>
+</body>
+</html>
+```
+
+---
+
+### What this does
+
+1. **`analyze_process()`**
+
+   * A place to drop in simple heuristics (or swap in an LLM call) that inspects your steps and returns suggestions.
+2. **Template changes**
+
+   * After you POST, you get two sections: the SVG chart **and** an “Improvement Hints” list.
+3. **Zero‑touch for your guests**
+
+   * They still just hit “Generate FlowMatic”—now they see where the process could be tightened up.
+
+Feel free to expand `analyze_process()` with as many rules or AI calls as you like. This will give visitors immediate visibility into both their flow and how to make it better.

@@ -1,0 +1,465 @@
+```plaintext
+.solution-desk/
+├── .replit
+├── .gitignore
+├── requirements.txt
+├── main.py
+├── app/
+│   ├── __init__.py
+│   ├── extensions.py
+│   ├── models.py
+│   ├── auth/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   ├── forms.py
+│   │   └── templates/auth/
+│   │       ├── login.html
+│   │       └── register.html
+│   ├── main/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   └── templates/main/
+│   │       ├── index.html
+│   │       └── tool_detail.html
+│   └── shop/
+│       ├── __init__.py
+│       └── routes.py
+├── content/
+│   └── example-tool.md
+├── templates/
+│   └── base.html
+└── static/
+    ├── css/style.css
+    ├── js/script.js
+    └── images/
+```
+
+---
+
+**.replit**
+
+```ini
+language = "python3"
+run = "flask run --host=0.0.0.0 --port=3000"
+```
+
+**.gitignore**
+
+```gitignore
+__pycache__/
+*.pyc
+instance/
+.env
+db.sqlite3
+migrations/
+```
+
+**requirements.txt**
+
+```txt
+Flask
+Flask-FlatPages
+Flask-SQLAlchemy
+Flask-Migrate
+psycopg2-binary
+flask-talisman
+flask-login
+flask-wtf
+stripe
+```
+
+**main.py**
+
+```python
+from app import create_app
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=3000)
+```
+
+---
+
+### app/**init**.py
+
+```python
+import os
+from flask import Flask
+from .extensions import db, migrate, pages, login_manager, talisman
+from .auth.routes import auth_bp
+from .main.routes import main_bp
+from .shop.routes import shop_bp
+
+def create_app():
+    app = Flask(__name__)
+    # Config
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///db.sqlite3')
+    app.config['FLATPAGES_ROOT'] = 'content'
+    app.config['FLATPAGES_EXTENSION'] = '.md'
+    app.config['STRIPE_PUBLISHABLE_KEY'] = os.getenv('STRIPE_PUBLISHABLE_KEY')
+    app.config['STRIPE_SECRET_KEY'] = os.getenv('STRIPE_SECRET_KEY')
+
+    # Init extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+    pages.init_app(app)
+    login_manager.init_app(app)
+    talisman.init_app(app)
+    login_manager.login_view = 'auth.login'
+
+    # Register Blueprints
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(shop_bp)
+    return app
+```
+
+### app/extensions.py
+
+```python
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_flatpages import FlatPages
+from flask_login import LoginManager
+from flask_talisman import Talisman
+
+# Initialize Flask extensions here
+
+db = SQLAlchemy()
+migrate = Migrate()
+pages = FlatPages()
+login_manager = LoginManager()
+talisman = Talisman()
+```
+
+### app/models.py
+
+```python
+from .extensions import db
+from flask_login import UserMixin
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    purchases = db.relationship('Purchase', backref='user', lazy=True)
+
+class Tool(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(80), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+
+class Purchase(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    tool_id = db.Column(db.Integer, db.ForeignKey('tool.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+```
+
+---
+
+### app/auth/routes.py
+
+```python
+from flask import Blueprint, render_template, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, login_required
+from .forms import RegisterForm, LoginForm
+from ..models import User
+from ..extensions import db
+
+auth_bp = Blueprint('auth', __name__, template_folder='templates/auth')
+
+@auth_bp.route('/register', methods=['GET','POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        new_user = User(
+            email=form.email.data,
+            password_hash=generate_password_hash(form.password.data)
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registered! Please log in.', 'success')
+        return redirect(url_for('auth.login'))
+    return render_template('register.html', form=form)
+
+@auth_bp.route('/login', methods=['GET','POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and check_password_hash(user.password_hash, form.password.data):
+            login_user(user)
+            return redirect(url_for('main.index'))
+        flash('Invalid credentials', 'danger')
+    return render_template('login.html', form=form)
+
+@auth_bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('main.index'))
+```
+
+### app/auth/forms.py
+
+```python
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo
+
+class RegisterForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Register')
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
+```
+
+---
+
+### app/main/routes.py
+
+```python
+from flask import Blueprint, render_template
+from flask_login import current_user
+from ..extensions import pages, db
+from ..models import Tool
+
+main_bp = Blueprint('main', __name__, template_folder='templates/main')
+
+@main_bp.route('/')
+def index():
+    tools = Tool.query.all()
+    return render_template('index.html', tools=tools)
+
+@main_bp.route('/tools/<path:path>')
+def tool_detail(path):
+    page = pages.get_or_404(path)
+    tool = Tool.query.filter_by(slug=path).first_or_404()
+    return render_template('tool_detail.html', page=page, tool=tool)
+```
+
+### app/shop/routes.py
+
+```python
+import os
+import stripe
+from flask import Blueprint, redirect, url_for, flash
+from flask_login import login_required, current_user
+from ..models import Tool, Purchase
+from ..extensions import db
+
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+shop_bp = Blueprint('shop', __name__, url_prefix='/shop')
+
+@shop_bp.route('/checkout/<int:tool_id>')
+@login_required
+def checkout(tool_id):
+    tool = Tool.query.get_or_404(tool_id)
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'cad',
+                'product_data': {'name': tool.name},
+                'unit_amount': 1000
+            },
+            'quantity': 1
+        }],
+        mode='payment',
+        success_url=url_for('shop.success', _external=True),
+        cancel_url=url_for('main.tool_detail', path=tool.slug, _external=True)
+    )
+    return redirect(session.url, 303)
+
+@shop_bp.route('/success')
+@login_required
+def success():
+    flash('Payment successful!', 'success')
+    # Optionally record purchase, fetch session for details
+    return redirect(url_for('main.index'))
+```
+
+---
+
+**content/example-tool.md**
+
+```markdown
+---
+slug: example-tool
+title: Example Tool
+---
+# Example Tool
+
+**Description:**
+A sample tool powered by Markdown.
+
+**Pricing:**
+- Free: limited features
+- Pro: $10.00
+```
+
+---
+
+### templates/base.html
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or 'SolutionDesk' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <nav>
+      <a href="{{ url_for('main.index') }}">Home</a>
+      {% if current_user.is_authenticated %}
+        <span>Welcome, {{ current_user.email }}</span>
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Login</a>
+        <a href="{{ url_for('auth.register') }}">Register</a>
+      {% endif %}
+    </nav>
+    <div class="content">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for category, message in msgs %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>
+```
+
+---
+
+### app/auth/templates/login.html
+
+```html
+{% extends "base.html" %}
+{% block content %}
+  <h2>Login</h2>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.email.label }}<br>{{ form.email(size=32) }}</p>
+    <p>{{ form.password.label }}<br>{{ form.password(size=32) }}</p>
+    <p>{{ form.submit() }}</p>
+  </form>
+  <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.</p>
+{% endblock %}
+```
+
+### app/auth/templates/register.html
+
+```html
+{% extends "base.html" %}
+{% block content %}
+  <h2>Register</h2>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.email.label }}<br>{{ form.email(size=32) }}</p>
+    <p>{{ form.password.label }}<br>{{ form.password(size=32) }}</p>
+    <p>{{ form.confirm.label }}<br>{{ form.confirm(size=32) }}</p>
+    <p>{{ form.submit() }}</p>
+  </form>
+  <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>.</p>
+{% endblock %}
+```
+
+---
+
+### app/main/templates/index.html
+
+```html
+{% extends "base.html" %}
+{% block content %}
+  <h1>Available Tools</h1>
+  <ul>
+    {% for tool in tools %}
+      <li><a href="{{ url_for('main.tool_detail', path=tool.slug) }}">{{ tool.name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+```
+
+### app/main/templates/tool\_detail.html
+
+```html
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ page.meta.title or tool.name }}</h1>
+  <div>{{ page.html|safe }}</div>
+  {% if current_user.is_authenticated %}
+    <a class="btn" href="{{ url_for('shop.checkout', tool_id=tool.id) }}">Buy Now</a>
+  {% else %}
+    <a class="btn" href="{{ url_for('auth.login') }}">Login to Purchase</a>
+  {% endif %}
+{% endblock %}
+```
+
+---
+
+### static/css/style.css
+
+```css
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+nav {
+  background: #333;
+  padding: 1rem;
+}
+nav a {
+  color: #fff;
+  margin-right: 1rem;
+  text-decoration: none;
+}
+.content {
+  padding: 1rem;
+}
+.flash {
+  padding: 0.5rem;
+  margin: 1rem 0;
+}
+.flash.success {
+  background: #d4edda;
+  color: #155724;
+}
+.flash.danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+```
+
+### static/js/script.js
+
+```javascript
+// Placeholder for any custom JS
+console.log('SolutionDesk loaded');
+```
+
+---
+
+With this, you have every piece—full templates, styles, scripts, model definitions, routes, and config—for a complete Flask + Stripe storefront ready to deploy on Replit with your custom domain.

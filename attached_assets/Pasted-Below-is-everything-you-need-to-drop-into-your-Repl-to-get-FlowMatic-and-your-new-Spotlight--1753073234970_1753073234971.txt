@@ -1,0 +1,316 @@
+Below is everything you need to drop into your Repl to get **FlowMatic** and your new **Spotlight** demo up and running—production‑ready style. Just paste each file into your project, seed your DB once, hit **Run**, and you’re off.
+
+---
+
+### 1. `.replit`
+
+```ini
+# tell Replit how to start your Flask app
+run = "python3 -u app.py"
+```
+
+---
+
+### 2. `app.py`
+
+```python
+import os
+from flask import Flask, render_template
+from replit import db
+
+# Blueprints
+from flowmatic import flowmatic_bp
+from spotlight import spotlight_bp
+
+app = Flask(__name__)
+app.register_blueprint(flowmatic_bp, url_prefix="/flowmatic")
+app.register_blueprint(spotlight_bp, url_prefix="/spotlight")
+
+def seed_tools():
+    # only seed if not present
+    db.setdefault("tool:flowmatic", {
+        "id":       "flowmatic",
+        "name":     "FlowMatic",
+        "problem":  "Scattered process steps slow you down",
+        "solution": "Auto‑generate interactive flowcharts from plain text",
+        "route":    "flowmatic.index"
+    })
+    db.setdefault("tool:spotlight", {
+        "id":       "spotlight",
+        "name":     "Spotlight",
+        "problem":  "Hidden bottlenecks eat your efficiency",
+        "solution": "Instant Pareto chart from your top metrics—no signup",
+        "route":    "spotlight.index"
+    })
+seed_tools()
+
+@app.route("/")
+def index():
+    # load in display order: flagship first
+    tools = [db["tool:flowmatic"], db["tool:spotlight"]]
+    # any others you’ve seeded will follow:
+    for key in db.keys():
+        if key.startswith("tool:") and key not in ("tool:flowmatic","tool:spotlight"):
+            tools.append(db[key])
+    flagship = tools.pop(0)
+    return render_template("index.html",
+                           flagship=flagship,
+                           tools=tools)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 3000))
+    app.run(host="0.0.0.0", port=port)
+```
+
+---
+
+### 3. `flowmatic.py`
+
+```python
+from flask import Blueprint, render_template, request
+import your_diagram_lib    # replace with your actual flowchart library
+
+flowmatic_bp = Blueprint("flowmatic", __name__, template_folder="templates")
+
+def generate_flowchart(process_text):
+    return your_diagram_lib.create_flowchart_svg(process_text)
+
+def analyze_process(process_text):
+    hints = []
+    steps = [s.strip() for s in process_text.split("→")]
+    if len(steps) > 5:
+        hints.append("Your process has over 5 steps—consider sub‑processes.")
+    if any("manual" in s.lower() for s in steps):
+        hints.append("I see a manual step; could you automate it?")
+    return hints
+
+@flowmatic_bp.route("/", methods=["GET","POST"])
+def index():
+    chart_svg = None
+    hints = []
+    if request.method == "POST":
+        proc = request.form.get("process","").strip()
+        if proc:
+            chart_svg = generate_flowchart(proc)
+            hints     = analyze_process(proc)
+    return render_template("flowmatic.html",
+                           chart_svg=chart_svg,
+                           hints=hints)
+```
+
+---
+
+### 4. `spotlight.py`
+
+```python
+from flask import Blueprint, render_template, request
+import matplotlib.pyplot as plt
+import io, base64
+
+spotlight_bp = Blueprint("spotlight", __name__, template_folder="templates")
+
+@spotlight_bp.route("/", methods=["GET","POST"])
+def index():
+    chart_uri = None
+    if request.method == "POST":
+        raw = request.form.get("metrics","").strip().splitlines()
+        data = []
+        for line in raw:
+            if ":" in line:
+                label, val = line.split(":",1)
+                try:
+                    data.append((label.strip(), float(val)))
+                except:
+                    pass
+        if data:
+            # Pareto: sort desc, compute cum%
+            data.sort(key=lambda x: x[1], reverse=True)
+            labels, values = zip(*data)
+            cum = [sum(values[:i+1]) / sum(values) * 100 for i in range(len(values))]
+
+            fig, ax = plt.subplots(figsize=(6,4))
+            ax.bar(labels, values, color="#B76E79")
+            ax2 = ax.twinx()
+            ax2.plot(labels, cum, marker='o', color="#7D5BA6")
+            ax.set_ylabel("Count")
+            ax2.set_ylabel("Cumulative %")
+            ax.set_xticklabels(labels, rotation=45, ha="right")
+            plt.tight_layout()
+
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', dpi=100)
+            buf.seek(0)
+            chart_uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+            plt.close(fig)
+
+    return render_template("spotlight.html", chart_uri=chart_uri)
+```
+
+---
+
+### 5. `templates/index.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Solution Desk</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <nav class="navbar navbar-dark">
+      <a class="navbar-brand" href="/">⚡ The Solution Desk</a>
+    </nav>
+  </header>
+
+  <section id="available-tools">
+    <h2>Available Tools</h2>
+    <div class="tools-grid">
+      <!-- FlowMatic flagship -->
+      <div class="card flagship-card">
+        <h3>{{ flagship.name }}</h3>
+        <p><strong>Problem:</strong> {{ flagship.problem }}</p>
+        <p><strong>Solution:</strong> {{ flagship.solution }}</p>
+        <a class="btn-highlight" href="{{ url_for(flagship.route) }}">
+          Try {{ flagship.name }}
+        </a>
+      </div>
+
+      <!-- Spotlight demo -->
+      <div class="card">
+        <h4>{{ tools[0].name }}</h4>
+        <p><strong>Problem:</strong> {{ tools[0].problem }}</p>
+        <p><strong>Solution:</strong> {{ tools[0].solution }}</p>
+        <a class="btn" href="{{ url_for(tools[0].route) }}">
+          Try {{ tools[0].name }}
+        </a>
+      </div>
+
+      <!-- any other tools would go here -->
+    </div>
+  </section>
+</body>
+</html>
+```
+
+---
+
+### 6. `templates/flowmatic.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FlowMatic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main class="tool-content">
+    <h1>⚡ FlowMatic</h1>
+    <p class="tagline">
+      Turn text‑based steps into interactive flowcharts—and get instant improvement hints.
+    </p>
+
+    <label for="preset-select"><strong>Common Processes:</strong></label>
+    <select id="preset-select">
+      <option value="">— choose a preset —</option>
+      <option value="Customer places order → Payment processed → Inventory checked → Shipping label created → Confirmation email sent">
+        Order Fulfillment
+      </option>
+      <option value="User signs up → Email verification sent → User confirms email → Welcome tour displayed">
+        User Onboarding
+      </option>
+      <option value="Support ticket received → Tier 1 triage → Escalate to Tier 2 → Issue resolved → User notified">
+        Support Ticket
+      </option>
+      <option value="Author drafts post → Editor reviews → Changes requested → Final approval → Publish to blog">
+        Content Publication
+      </option>
+    </select>
+
+    <form method="POST">
+      <label for="process-input"><strong>Or enter your own steps:</strong></label>
+      <textarea id="process-input" name="process" rows="5"
+        placeholder="Step 1 → Step 2 → Step 3"></textarea>
+      <button class="btn-highlight" type="submit">Generate FlowMatic</button>
+    </form>
+
+    {% if chart_svg %}
+      <section class="flow-chart">
+        <h2>Your Flow</h2>
+        <div class="chart-container">
+          {{ chart_svg|safe }}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if hints %}
+      <section class="improvement-hints">
+        <h2>💡 Hints</h2>
+        <ul>
+          {% for hint in hints %}
+            <li>{{ hint }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  </main>
+  <script>
+    document.getElementById('preset-select').addEventListener('change', function(){
+      document.getElementById('process-input').value = this.value;
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+### 7. `templates/spotlight.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spotlight</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main class="tool-content">
+    <h1>🔍 Spotlight</h1>
+    <p class="tagline">
+      Paste your metrics, get an instant Pareto chart—no signup required.
+    </p>
+
+    <form method="POST">
+      <label for="metrics"><strong>Enter label:value per line (max 10):</strong></label>
+      <textarea id="metrics" name="metrics" rows="6"
+        placeholder="Defect A: 25&#10;Defect B: 10&#10;Defect C: 5"></textarea>
+      <button class="btn-highlight" type="submit">Generate Spotlight</button>
+    </form>
+
+    {% if chart_uri %}
+      <section class="spotlight-chart">
+        <h2>Your Spotlight Chart</h2>
+        <img src="{{ chart_uri }}" alt="Pareto Chart">
+      </section>
+    {% endif %}
+  </main>
+</body>
+</html>
+```
+
+---
+
+#### ✅ Next Steps
+
+1. **Paste** these files into your Repl at the paths shown.
+2. **Ensure** your existing `static/css/style.css` contains your purple & rose‑gold palette (no changes needed).
+3. Hit **Run** in Replit and navigate to `/`—you’ll see **FlowMatic** first, full‑width, and **Spotlight** right underneath.
+4. Click **Try Spotlight** to input some `Label:Value` lines and watch your Pareto chart appear.
+
+You’re now as close to production‑ready as you can be on Replit—no signup, instant demos, and a clear upgrade path from **Spotlight** → **FlowMatic**.

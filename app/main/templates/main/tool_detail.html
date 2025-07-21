@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Tool Content -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h1 class="card-title mb-2">{{ page.meta.title or tool.name }}</h1>
+                        <div class="d-flex align-items-center gap-3 text-muted">
+                            <span><i data-feather="tag" class="me-1"></i>Digital Tool</span>
+                            <span><i data-feather="clock" class="me-1"></i>Instant Access</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fs-3 fw-bold text-primary">${{ "%.2f"|format(tool.price_dollars) }}</div>
+                        <small class="text-muted">One-time purchase</small>
+                    </div>
+                </div>
+                
+                <!-- Tool Description -->
+                <div class="tool-content">
+                    {{ page.html|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Purchase Card -->
+        <div class="card shadow-sm sticky-top" style="top: 2rem;">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i data-feather="shopping-cart" class="me-2"></i>Purchase Options
+                </h5>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">{{ tool.name }}</span>
+                        <span class="fs-4 fw-bold text-primary">${{ "%.2f"|format(tool.price_dollars) }}</span>
+                    </div>
+                    <small class="text-muted">One-time purchase, lifetime access</small>
+                </div>
+                
+                {% if current_user.is_authenticated %}
+                    {% if has_purchased %}
+                        <div class="alert alert-success d-flex align-items-center">
+                            <i data-feather="check-circle" class="me-2"></i>
+                            <div>
+                                <strong>You own this tool!</strong><br>
+                                <small>You have full access to this digital tool.</small>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary w-100">
+                            <i data-feather="layout" class="me-2"></i>Go to Dashboard
+                        </a>
+                    {% else %}
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center text-success mb-2">
+                                <i data-feather="shield" class="me-2"></i>
+                                <small>Secure payment powered by Stripe</small>
+                            </div>
+                            <div class="d-flex align-items-center text-info mb-2">
+                                <i data-feather="download" class="me-2"></i>
+                                <small>Instant access after purchase</small>
+                            </div>
+                            <div class="d-flex align-items-center text-warning">
+                                <i data-feather="refresh-cw" class="me-2"></i>
+                                <small>30-day money-back guarantee</small>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('shop.checkout', tool_id=tool.id) }}" class="btn btn-highlight w-100 btn-lg">
+                            <i data-feather="credit-card" class="me-2"></i>Buy Now - ${{ "%.2f"|format(tool.price_dollars) }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Sign in required</strong><br>
+                        <small>Create an account or sign in to purchase this tool.</small>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('auth.login') }}?next={{ request.url }}" class="btn btn-primary">
+                            <i data-feather="log-in" class="me-2"></i>Sign In to Purchase
+                        </a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-secondary">
+                            <i data-feather="user-plus" class="me-2"></i>Create Account
+                        </a>
+                    </div>
+                {% endif %}
+                
+                <hr class="my-3">
+                
+                <!-- Additional Info -->
+                <div class="small text-muted">
+                    <div class="d-flex align-items-center mb-2">
+                        <i data-feather="users" class="me-2"></i>
+                        <span>Single user license</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i data-feather="headphones" class="me-2"></i>
+                        <span>Email support included</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i data-feather="update" class="me-2"></i>
+                        <span>Free updates included</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="mt-3">
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                <i data-feather="arrow-left" class="me-2"></i>Back to Tools
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

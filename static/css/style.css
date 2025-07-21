@@ -1,0 +1,172 @@
+/* FlowMatic Executive Cyberpunk — Purple & Rose Gold */
+
+:root {
+  /* Surfaces */
+  --bg:        #1A0E36;  /* deep indigo */
+  --surface:   #2C1A4B;  /* muted plum */
+
+  /* Text */
+  --text:      #EDE7F6;  /* pale lilac */
+  --heading:   #FFFFFF;  /* crisp white */
+  --subtext:   #B8B0C5;  /* muted purple‑gray */
+
+  /* Accents */
+  --rose-gold: #B76E79;  /* main rose‑gold */
+  --purple:    #7D5BA6;  /* secondary purple */
+  --highlight: #E6B7C1;  /* soft rose for CTAs */
+}
+
+/* Base Styles */
+body {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Navbar */
+.navbar, .navbar-dark {
+  background: var(--surface) !important;
+}
+.navbar-brand {
+  color: var(--rose-gold);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.navbar-nav .nav-link {
+  color: var(--text);
+  transition: color 0.2s;
+}
+.navbar-nav .nav-link:hover {
+  color: var(--rose-gold) !important;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading);
+}
+
+/* Links */
+a {
+  color: var(--rose-gold);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover {
+  color: var(--purple);
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--rose-gold);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rose-gold);
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.btn:hover {
+  background: var(--purple);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Highlight / CTA Buttons */
+.btn-highlight {
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: var(--bg);
+  box-shadow: 0 0 10px rgba(183, 110, 121, 0.6);
+  transition: background 0.2s, color 0.2s;
+}
+.btn-highlight:hover {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+/* Cards and Jumbotron */
+.card, .jumbotron {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
+  border-color: var(--rose-gold);
+}
+
+/* Flagship Tool Card */
+.flagship-card {
+  grid-column: 1 / -1; /* span full width */
+  border: 2px solid var(--rose-gold);
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(183,110,121,0.05) 100%);
+  box-shadow: 0 8px 32px rgba(183,110,121,0.2);
+}
+.flagship-card h3 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.flagship-card p {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+.flagship-card .btn-highlight {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+}
+
+/* Tool Content */
+.tool-content h1,
+.tool-content h2 {
+  margin: 1.5rem 0 1rem;
+  font-weight: 600;
+}
+.tool-content p,
+.tool-content li {
+  margin-bottom: 0.75rem;
+}
+.tool-content code {
+  background: var(--bg);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+}
+.tool-content pre {
+  background: var(--surface);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+/* Utility */
+.text-secondary {
+  color: var(--subtext) !important;
+}
+
+/* Improvement hints styling */
+.improvement-hints .card {
+    border: 1px solid var(--rose-gold);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(125, 91, 166, 0.05) 100%);
+}
+
+.improvement-hints .card-title {
+    color: var(--rose-gold);
+    font-size: 1.25rem;
+}
+
+.improvement-hints li {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.improvement-hints .text-primary {
+    color: var(--rose-gold) !important;
+}

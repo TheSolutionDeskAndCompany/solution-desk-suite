@@ -1,0 +1,94 @@
+### 1. Swap out the temporary DB for something persistent
+
+On Replit, the left‑hand “Database” panel is actually **Replit DB**—it persists across restarts by default. To use it in Python, for example:
+
+```python
+from replit import db
+
+# write
+db["user:123"] = {"name":"Amber", "role":"admin"}
+
+# read
+profile = db["user:123"]
+```
+
+If you need a **relational** datastore instead, you can hook up to a free tier of:
+
+* **Supabase** (PostgreSQL + auth + storage)
+* **PlanetScale** (MySQL‑compatible)
+* **ElephantSQL** (managed Postgres)
+
+Each gives you a connection string you can store in a Replit secret and use with your preferred client library.
+
+---
+
+### 2. Tool cards: show the problem → solution
+
+Absolutely—every tool should start with **what problem it solves**, e.g.:
+
+> **Shopping List App**
+> *Problem:* Forgotten items, disorganized meal plans, last‑minute store runs.
+> *Solution:* Quickly build and share grocery lists, mark off items, auto‑sort by category.
+
+That framing makes the benefit crystal‑clear, especially for SMB owners or parents.
+
+---
+
+### 3. Three new “Executive Cyberpunk” palettes
+
+Pick the one whose accent vibe you like, then drop into your CSS variables:
+
+<details>
+<summary>Variation 1: Teal Pop</summary>
+
+```css
+:root {
+  --bg:      #1A1A28;  /* ultradark navy */
+  --surface: #252535;  /* deep slate */
+  --text:    #E3E3E3;  /* off‑white */
+  --accent:  #00BFA6;  /* softened neon teal */
+  --highlight: #FFC857;/* warm gold for CTAs */
+}
+```
+
+</details>
+
+<details>
+<summary>Variation 2: Magenta Edge</summary>
+
+```css
+:root {
+  --bg:       #1B1B2F; /* rich charcoal */
+  --surface:  #2E2E42; /* muted indigo */
+  --text:     #E8E8E8; /* off‑white */
+  --accent:   #D7263D; /* deep neon magenta */
+  --highlight:#F0A500; /* amber call‑out */
+}
+```
+
+</details>
+
+<details>
+<summary>Variation 3: Green Glow</summary>
+
+```css
+:root {
+  --bg:       #11111F; /* almost black */
+  --surface:  #1E1E3F; /* navy charcoal */
+  --text:     #DFDFDF; /* off‑white */
+  --accent:   #39FF14; /* electric lime (toned down) */
+  --highlight:#FF6F61; /* coral punch */
+}
+```
+
+</details>
+
+---
+
+**Next steps**
+
+1. Choose a palette variation.
+2. Wire up Replit DB (or external DB).
+3. Update each tool’s card to lead with the problem → solution.
+
+Let me know which accent palette you want to roll with, or if you’d like another tweak!

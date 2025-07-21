@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold">
+                <i data-feather="layout" class="me-2"></i>My Dashboard
+            </h1>
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary">
+                <i data-feather="grid" class="me-2"></i>Browse More Tools
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if purchased_tools %}
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i data-feather="check-circle" class="me-2 text-success"></i>Your Purchased Tools
+        </h3>
+        
+        <div class="row">
+            {% for tool in purchased_tools %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">{{ tool.name }}</h5>
+                            <span class="badge bg-success">
+                                <i data-feather="check" class="me-1"></i>Owned
+                            </span>
+                        </div>
+                        
+                        <p class="card-text text-muted">
+                            You have full access to this digital tool and all its features.
+                        </p>
+                        
+                        <div class="d-flex align-items-center mb-3 text-success">
+                            <i data-feather="dollar-sign" class="me-2"></i>
+                            <span class="fw-semibold">${{ "%.2f"|format(tool.price_dollars) }} - Lifetime Access</span>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('main.tool_detail', path=tool.slug) }}" class="btn btn-primary">
+                                <i data-feather="eye" class="me-2"></i>Access Tool
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i data-feather="shopping-cart" class="text-muted" style="width: 80px; height: 80px;"></i>
+            </div>
+            <h3 class="text-muted mb-3">No Tools Purchased Yet</h3>
+            <p class="text-muted mb-4">
+                You haven't purchased any tools yet. Browse our marketplace to find digital solutions 
+                that can enhance your productivity and streamline your workflow.
+            </p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">
+                <i data-feather="grid" class="me-2"></i>Browse Available Tools
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Account Information -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i data-feather="user" class="me-2"></i>Account Information
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Email:</strong> {{ current_user.email }}
+                        </p>
+                        <p class="mb-2">
+                            <strong>Member Since:</strong> {{ current_user.created_at.strftime('%B %d, %Y') }}
+                        </p>
+                        <p class="mb-0">
+                            <strong>Total Tools Purchased:</strong> {{ purchased_tools|length }}
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                            <i data-feather="log-out" class="me-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

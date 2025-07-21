@@ -1,0 +1,58 @@
+Here’s a drop‑in enhancement to your `flowmatic.html` that adds a “Common Processes” dropdown, so prospects can instantly pick a template and see FlowMatic in action:
+
+```html
+<!-- templates/flowmatic.html -->
+<h1>⚡ FlowMatic</h1>
+<p class="tagline">
+  Turn your text‑based process steps into clean, interactive flowcharts instantly.
+</p>
+
+<label for="preset-select"><strong>Common Processes:</strong></label>
+<select id="preset-select">
+  <option value="">— choose a preset —</option>
+  <option value="Customer places order → Payment processed → Inventory checked → Shipping label created → Confirmation email sent">
+    Order Fulfillment
+  </option>
+  <option value="User signs up → Email verification sent → User confirms email → Welcome tour displayed">
+    User Onboarding
+  </option>
+  <option value="Support ticket received → Tier 1 triage → Escalate to Tier 2 → Issue resolved → User notified">
+    Support Ticket
+  </option>
+  <option value="Author drafts post → Editor reviews → Changes requested → Final approval → Publish to blog">
+    Content Publication
+  </option>
+</select>
+
+<form method="POST">
+  <label for="process-input"><strong>Or paste your own steps:</strong></label>
+  <textarea id="process-input" name="process" rows="6" placeholder="
+    e.g. Customer places order → Payment processed → Inventory checked → Shipping label created → Confirmation email sent
+  "></textarea>
+  <button class="btn-highlight" type="submit">
+    Generate FlowMatic
+  </button>
+</form>
+
+<script>
+  // auto‑populate textarea when a preset is chosen
+  document.getElementById('preset-select').addEventListener('change', function() {
+    const preset = this.value;
+    const ta = document.getElementById('process-input');
+    if (preset) {
+      ta.value = preset;
+    } else {
+      ta.value = '';
+    }
+    ta.focus();
+  });
+</script>
+```
+
+**What this does:**
+
+1. **Dropdown of four common flows** (Order Fulfillment, Onboarding, Support, Content).
+2. **Auto‑fill the textarea** with the chosen template so users get instant insight.
+3. **Keeps your POST handler** exactly the same—just reads `request.form['process']`.
+
+Drop this into your Repl, hard‑refresh, and now visitors can “try” FlowMatic with zero setup.

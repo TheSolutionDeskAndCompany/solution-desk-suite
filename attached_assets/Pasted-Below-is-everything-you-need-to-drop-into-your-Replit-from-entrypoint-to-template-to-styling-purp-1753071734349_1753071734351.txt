@@ -1,0 +1,216 @@
+Below is everything you need to drop into your Replit — from entrypoint to template to styling (purple + rose‑gold) — so that your Process Visualizer flagship sits first (full‑width) under “Available Tools,” with all other cards below it.
+
+---
+
+### 1. `.replit`
+
+```ini
+# tell Replit how to start your Flask app
+run = "python3 -u app.py"
+```
+
+---
+
+### 2. `app.py`
+
+```python
+from flask import Flask, render_template
+from replit import db
+from process_visualizer import process_visualizer_bp  # your blueprint
+
+app = Flask(__name__)
+app.register_blueprint(process_visualizer_bp, url_prefix="/process-visualizer")
+
+def load_tools():
+    """Read all tools from Replit DB.  
+    Expect keys like "tool:<id>" mapping to dicts with:
+      { id, name, problem, solution, route }
+    """
+    tools = []
+    for key in db.keys():
+        if key.startswith("tool:"):
+            tools.append(db[key])
+    # you can sort here if you like
+    return tools
+
+@app.route("/")
+def index():
+    all_tools = load_tools()
+    flagship = next(t for t in all_tools if t["id"] == "process_visualizer")
+    others   = [t for t in all_tools if t["id"] != "process_visualizer"]
+    return render_template("index.html",
+                           flagship=flagship,
+                           tools=others)
+
+if __name__ == "__main__":
+    # Replit exposes PORT via env var; Flask defaults to 5000 so override:
+    import os
+    port = int(os.environ.get("PORT", 3000))
+    app.run(host="0.0.0.0", port=port)
+```
+
+> **Seed your tools** in the Replit DB console (or via code) like so:
+>
+> ```python
+> from replit import db
+> db["tool:process_visualizer"] = {
+>   "id":"process_visualizer",
+>   "name":"Process Visualizer",
+>   "problem":"Unclear process flows slowing you down",
+>   "solution":"Auto‑generate end‑to‑end flowcharts from your inputs",
+>   "route":"process_visualizer.index"
+> }
+> # ...and similarly for others (tool:budget_tracker, etc.)
+> ```
+
+---
+
+### 3. `templates/index.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Solution Desk</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/">⚡ The Solution Desk</a>
+      <a href="/login">Login</a>
+      <a class="btn" href="/register">Register</a>
+    </nav>
+  </header>
+
+  <!-- Hero omitted for brevity -->
+
+  <section id="available-tools">
+    <h2>Available Tools</h2>
+    <div class="tools-grid">
+      <!-- Flagship full-width -->
+      <div class="tool-card flagship">
+        <h3>{{ flagship.name }}</h3>
+        <p><strong>Problem:</strong> {{ flagship.problem }}</p>
+        <p><strong>Solution:</strong> {{ flagship.solution }}</p>
+        <a class="btn btn--cta" href="{{ url_for(flagship.route) }}">
+          Try {{ flagship.name }}
+        </a>
+      </div>
+
+      <!-- Other tools -->
+      {% for tool in tools %}
+      <div class="tool-card">
+        <h4>{{ tool.name }}</h4>
+        <p><strong>Problem:</strong> {{ tool.problem }}</p>
+        <p><strong>Solution:</strong> {{ tool.solution }}</p>
+        <a class="btn" href="{{ url_for(tool.route) }}">
+          Try {{ tool.name }}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</body>
+</html>
+```
+
+---
+
+### 4. `static/css/style.css`
+
+```css
+/* ——————— Purple + Rose‑Gold Executive Cyberpunk ——————— */
+
+:root {
+  /* Surfaces */
+  --bg:        #1A0E36;  /* deep indigo */
+  --surface:   #2C1A4B;  /* muted plum */
+
+  /* Text */
+  --text:      #EDE7F6;  /* pale lilac */
+  --heading:   #FFFFFF;  /* crisp white */
+
+  /* Accents */
+  --rose-gold: #B76E79;  /* main rose‑gold */
+  --purple:    #7D5BA6;  /* secondary purple */
+  --highlight: #E6B7C1;  /* soft rose for CTAs */
+}
+
+body {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: var(--surface);
+}
+
+nav a {
+  color: var(--text);
+  text-decoration: none;
+  margin-left: 1rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--rose-gold);
+  color: var(--rose-gold);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn:hover {
+  background: var(--purple);
+  color: #fff;
+}
+
+.btn--cta {
+  background: var(--highlight);
+  color: var(--bg);
+  box-shadow: 0 0 10px rgba(183,110,121,0.6);
+}
+
+h2 {
+  margin: 2rem 2rem 1rem;
+  color: var(--heading);
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  padding: 0 2rem 2rem;
+}
+
+.tool-card {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  padding: 1.5rem;
+}
+
+.tool-card.flagship {
+  grid-column: 1 / -1;      /* span full width */
+  padding: 2.5rem;
+  font-size: 1.1rem;
+  border: 2px solid var(--rose-gold);
+}
+```
+
+---
+
+#### 🔑 What to do next:
+
+1. **Paste** the four files into your Repl (`.replit`, `app.py`, `templates/index.html`, `static/css/style.css`).
+2. **Seed** your tools in Replit DB (via the console or `app.py` on startup).
+3. Hit **Run** — your Process Visualizer card will show first, full‑width in purple & rose‑gold, with all other tools below.
+
+Let me know if anything needs tweaking!

@@ -1,0 +1,115 @@
+Let’s wire up **FlowMatic** end‑to‑end and make sure your purple & rose‑gold theme actually loads. Follow these steps in your Repl:
+
+---
+
+## 1. Rename your tool in Replit DB
+
+Open the **Database** sidebar, delete your old `tool:workflow_visualizer` entry, then add:
+
+```python
+# In the DB console (or run this once in a scratch cell)
+from replit import db
+
+db["tool:flowmatic"] = {
+  "id":       "flowmatic",
+  "name":     "FlowMatic",
+  "problem":  "Scattered process steps slow you down",
+  "solution": "Auto‑generate interactive flowcharts from plain text",
+  "route":    "flowmatic.index"
+}
+```
+
+---
+
+## 2. Register your FlowMatic blueprint
+
+Rename your blueprint file to `flowmatic.py` (if you haven’t already) and inside:
+
+```python
+# flowmatic.py
+from flask import Blueprint, render_template, request
+
+flowmatic_bp = Blueprint("flowmatic", __name__, template_folder="templates")
+
+@flowmatic_bp.route("/", methods=["GET","POST"])
+def index():
+    if request.method=="POST":
+       # handle the POST that generates your diagram…
+       pass
+    return render_template("flowmatic.html")
+```
+
+Then in `app.py` swap:
+
+```diff
+- from workflow_visualizer import workflow_visualizer_bp
+- app.register_blueprint(workflow_visualizer_bp, url_prefix="/workflow-visualizer")
++ from flowmatic import flowmatic_bp
++ app.register_blueprint(flowmatic_bp, url_prefix="/flowmatic")
+```
+
+---
+
+## 3. Update your homepage template
+
+In `templates/index.html`, change the flagship card to use **FlowMatic** and match your CSS selector `.flagship-card`:
+
+```html
+<div class="card flagship-card">
+  <h3>{{ flagship.name }}</h3>
+  <p><strong>Problem:</strong> {{ flagship.problem }}</p>
+  <p><strong>Solution:</strong> {{ flagship.solution }}</p>
+  <a class="btn-highlight" href="{{ url_for(flagship.route) }}">
+    Generate FlowMatic
+  </a>
+</div>
+```
+
+Make sure you’ve swapped any remaining `{{ url_for("workflow_visualizer.index") }}` to `{{ url_for("flowmatic.index") }}`.
+
+---
+
+## 4. Verify your FlowMatic page
+
+Rename `templates/workflow_visualizer.html` → `templates/flowmatic.html` and at the top:
+
+```html
+<h1>⚡ FlowMatic</h1>
+<p class="tagline">
+  Turn your text‐based process steps into clean, interactive flowcharts instantly.
+</p>
+<form method="POST">
+  <textarea name="process" placeholder="
+    e.g. Customer places order → Payment is processed → Inventory checked → Shipping label created → Confirmation email sent
+  "></textarea>
+  <button class="btn-highlight" type="submit">
+    Generate FlowMatic
+  </button>
+</form>
+```
+
+---
+
+## 5. Ensure your CSS is loading
+
+1. In your `<head>` (e.g. `templates/base.html` or at top of `index.html`), confirm:
+
+   ```html
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+   ```
+
+2. In `static/css/style.css`, verify the block you pasted (the `:root { … }` purple & rose‑gold variables) appears **before** any other overrides.
+
+3. Hard‑refresh your browser (Ctrl + F5) to bust the cache.
+
+---
+
+## 6. Run & test
+
+* Click **Run** in Replit
+* Visit `https://<your‑repl>.replit.dev/` — you should see one full‑width **FlowMatic** card, styled in your purple & rose‑gold theme.
+* Clicking “Generate FlowMatic” should take you to `…/flowmatic` and render your tool page in the same colors.
+
+---
+
+Once you’ve gone through all six steps, your flagship will **pop**, the name will stick, and your cyberpunk‑refined purple & rose‑gold will actually show up. Let me know if you hit any snags!

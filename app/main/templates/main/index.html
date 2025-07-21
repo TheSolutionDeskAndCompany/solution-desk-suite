@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="jumbotron rounded-3 p-5 mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="welcome-title fw-bold mb-3">
+                    <i data-feather="zap" class="me-2"></i>Welcome to The Solution Desk
+                </h1>
+                <p class="lead mb-4">
+                    Stop struggling with scattered workflows and inefficient processes. Our curated marketplace delivers
+                    <strong>problem-solving digital tools</strong> that transform how you work, backed by AI-powered automation and professional-grade features.
+                </p>
+                {% if not current_user.is_authenticated %}
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-highlight btn-lg">
+                        <i data-feather="user-plus" class="me-2"></i>Get Started
+                    </a>
+                    <a href="#tools" class="btn btn-outline-light btn-lg">
+                        <i data-feather="eye" class="me-2"></i>Browse Tools
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-4 text-center">
+                <i data-feather="shopping-cart" style="width: 120px; height: 120px;" class="text-white opacity-75"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i data-feather="shield" class="text-primary mb-3" style="width: 48px; height: 48px;"></i>
+                <h5 class="card-title">Secure Payments</h5>
+                <p class="card-text text-muted">
+                    All transactions are protected with industry-standard encryption and Stripe's secure payment processing.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i data-feather="download" class="text-primary mb-3" style="width: 48px; height: 48px;"></i>
+                <h5 class="card-title">Instant Access</h5>
+                <p class="card-text text-muted">
+                    Get immediate access to your purchased tools. No waiting, no delays - start using them right away.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i data-feather="headphones" class="text-primary mb-3" style="width: 48px; height: 48px;"></i>
+                <h5 class="card-title">Expert Support</h5>
+                <p class="card-text text-muted">
+                    Our dedicated support team is here to help you get the most out of every tool you purchase.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tools Section -->
+<section id="tools">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">
+            <i data-feather="grid" class="me-2"></i>Available Tools
+        </h2>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+            <i data-feather="user" class="me-2"></i>My Dashboard
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Flagship Tool - Full Width -->
+    {% if flagship %}
+    <div class="flagship-tool mb-5">
+        <div class="card flagship-card">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h3 class="fw-bold mb-3">
+                            ⚡ {{ flagship.name }}
+                        </h3>
+                        <div class="mb-3">
+                            <p class="mb-2 fs-5">
+                                <strong>Problem:</strong> {{ flagship.problem }}
+                            </p>
+                            <p class="mb-0 fs-5">
+                                <strong>Solution:</strong> {{ flagship.solution }}
+                            </p>
+                        </div>
+                        <a href="{{ url_for(flagship.route) }}" class="btn btn-highlight btn-lg">
+                            <i data-feather="zap" class="me-2"></i>Try {{ flagship.name }} →
+                        </a>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <i data-feather="zap" style="width: 120px; height: 120px;" class="text-primary opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Spotlight Demo Tool -->
+    {% if spotlight_tool %}
+    <div class="spotlight-demo mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h4 class="fw-bold mb-3">
+                            🔍 {{ spotlight_tool.name }}
+                        </h4>
+                        <div class="mb-3">
+                            <p class="mb-2">
+                                <strong>Problem:</strong> {{ spotlight_tool.problem }}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Solution:</strong> {{ spotlight_tool.solution }}
+                            </p>
+                        </div>
+                        <a href="{{ url_for(spotlight_tool.route) }}" class="btn btn-primary">
+                            <i data-feather="bar-chart-2" class="me-2"></i>Try {{ spotlight_tool.name }} →
+                        </a>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <i data-feather="bar-chart-2" style="width: 80px; height: 80px;" class="text-primary opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Other Tools -->
+    {% if tools %}
+    <div class="row">
+        {% for tool in tools %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ tool.name }}</h5>
+                        <span class="badge bg-primary fs-6">${{ "%.2f"|format(tool.price_dollars) }}</span>
+                    </div>
+                    {% set desc = tool_descriptions.get(tool.slug, {}) %}
+                    {% if desc %}
+                    <div class="mb-3">
+                        <p class="text-muted mb-2">
+                            <strong>Problem:</strong> {{ desc.problem }}
+                        </p>
+                        <p class="text-muted mb-0">
+                            <strong>Solution:</strong> {{ desc.solution }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <p class="card-text text-muted">
+                        Enhance your workflow with this powerful digital tool designed for professionals.
+                    </p>
+                    {% endif %}
+                    
+                    {% if current_user.is_authenticated %}
+                        <!-- Check if user owns this tool -->
+                        {% set user_owns_tool = current_user.purchases | selectattr('tool_id', 'equalto', tool.id) | list | length > 0 %}
+                        {% if user_owns_tool %}
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('main.tool_detail', path=tool.slug) }}" class="btn btn-success flex-fill">
+                                    <i data-feather="check" class="me-2"></i>Owned
+                                </a>
+                                <a href="{{ url_for('main.tool_detail', path=tool.slug) }}" class="btn btn-outline-primary">
+                                    <i data-feather="eye" class="me-2"></i>View
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('main.tool_detail', path=tool.slug) }}" class="btn btn-primary flex-fill">
+                                    <i data-feather="shopping-cart" class="me-2"></i>Buy Now
+                                </a>
+                                <a href="{{ url_for('main.tool_detail', path=tool.slug) }}" class="btn btn-outline-secondary">
+                                    <i data-feather="eye" class="me-2"></i>Details
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-primary flex-fill">
+                                <i data-feather="log-in" class="me-2"></i>Login to Buy
+                            </a>
+                            <a href="{{ url_for('main.tool_detail', path=tool.slug) }}" class="btn btn-outline-secondary">
+                                <i data-feather="eye" class="me-2"></i>Details
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i data-feather="package" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+        <h4 class="text-muted">No Tools Available</h4>
+        <p class="text-muted">Tools will appear here when they become available.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

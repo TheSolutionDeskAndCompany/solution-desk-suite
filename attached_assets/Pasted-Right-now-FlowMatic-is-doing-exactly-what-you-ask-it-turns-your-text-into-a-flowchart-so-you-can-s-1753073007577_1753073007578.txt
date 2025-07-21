@@ -1,0 +1,76 @@
+Right now FlowMatic is doing exactly what you ask—it turns your text into a flowchart so you can **see** your process laid out. But by itself it doesn’t yet highlight *where* things could be improved. To make it truly valuable you’ll want to:
+
+---
+
+## 1. Enrich your input with basic metrics
+
+Have users annotate each step with a simple data point—like **average duration**, **cost**, or **manual vs automated**—so FlowMatic can flag bottlenecks. For example:
+
+```
+Customer places order (2h) → Payment processed (30m) → Inventory check (15m, manual) → Ship item (1h) → Confirmation sent (5m)
+```
+
+With that you can:
+
+* **Color‑code** any step tagged “manual” in red.
+* **Calculate** which step has the longest duration and highlight it.
+* **Show** total cycle time at the top of the chart.
+
+---
+
+## 2. Build simple heuristics or AI hints
+
+Extend your `analyze_process()` from before to look at those annotations:
+
+```python
+for step in parsed_steps:
+  if step.duration > 60:
+    hints.append(f"⏱️ “{step.name}” takes over an hour—consider splitting it or automating part of it.")
+  if step.is_manual:
+    hints.append(f"🛠️ “{step.name}” is manual—could we streamline or script this?")
+```
+
+Or even call an LLM:
+
+```python
+def ai_analyze(process_text):
+    prompt = (
+      "Here’s a process with durations/annotations:\n" + process_text +
+      "\n\nWhere are the biggest opportunities for automation or simplification?"
+    )
+    return openai.ChatCompletion.create(...).choices[0].message.content
+```
+
+---
+
+## 3. Visual cues in the chart
+
+* **Node fill**: red for manual, green for automated.
+* **Node size**: proportional to duration.
+* **Badges/icons**: small warning icon on any step that meets a “needs attention” rule.
+
+---
+
+## 4. Example flow input format
+
+Encourage users to enter a richer syntax:
+
+```
+Step 1: Draft proposal (45m, automated)
+→ Step 2: Review & approval (2h, manual)
+→ Step 3: Client onboarding (1h, semi‑automated)
+→ Step 4: Kickoff meeting (30m)
+```
+
+Then your parser splits on arrows, pulls out `(duration, tag)`, and your front‑end applies styling and your back‑end generates hints.
+
+---
+
+### In practice
+
+1. **Ask** users to include one metric (start with duration).
+2. **Parse** that out in `flowmatic.py`, enrich `chart_svg` (e.g. color nodes, size nodes).
+3. **Run** `analyze_process()` on those metrics to generate targeted hints.
+4. **Render** the hints and styled chart together so they instantly see both “what the process looks like” and “here’s where you should focus.”
+
+That way FlowMatic goes from a pretty diagram to a true *Process Analyzer*—showing not just the steps, but exactly where to improve.
